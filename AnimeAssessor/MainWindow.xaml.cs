@@ -21,22 +21,23 @@ namespace AnimeAssessor
     public partial class MainWindow : Window
     {
         // TODO Produce and suggest the top 5 matches?
+        // TODO Folder selection is not user-friendly
         // TODO Algorithm isn't functioning properly, test Manyuu Hiken-chou
         // Produce an output file or email it?
         // Add matrix for Quality/Size ratio
 
-        OpenDialogView openDialog;
-        List<DirectoryInfo> dirList;
-        BackgroundWorker AnalyzerThread;
+        OpenDialogView _openDialog;
+        List<DirectoryInfo> _dirList;
+        BackgroundWorker _AnalyzerThread;
 
         // Analyzer Components
-        public static char[] removablesNum = new char[] { '.', '_', '-', ' ', '^', '!', '@', '#', '$', '%', '&', '*', '~', '`', '?', '(', ')', '[', ']', '{', '}', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        public static char[] removables = new char[] { '.', '_', '-', ' ', '^', '!', '@', '#', '$', '%', '&', '*', '~', '`', '?', '(', ')', '[', ']', '{', '}', '+' };
-        public static string animeDBPath = "ANN_AnimeDB_20-12-2015.xml";
-        public string parentPath, outputPath;
-        public List<string> titles;
-        public List<Children> notSortedFiles;
-        public List<Category> sortedFiles;
+        public static char[] _removablesNum = new char[] { '.', '_', '-', ' ', '^', '!', '@', '#', '$', '%', '&', '*', '~', '`', '?', '(', ')', '[', ']', '{', '}', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        public static char[] _removables = new char[] { '.', '_', '-', ' ', '^', '!', '@', '#', '$', '%', '&', '*', '~', '`', '?', '(', ')', '[', ']', '{', '}', '+' };
+        public static string _animeDBPath = "ANN_AnimeDB_20-12-2015.xml";
+        public string _parentPath, _outputPath;
+        public List<string> _titles;
+        public List<Children> _notSortedFiles;
+        public List<Category> _sortedFiles;
 
         public MainWindow()
         {
@@ -50,18 +51,18 @@ namespace AnimeAssessor
             InitBackgroundWorker();
 
             // Assigns handler methods
-            AnalyzerThread.DoWork += AnalyzerThread_DoWork;
-            AnalyzerThread.ProgressChanged += AnalyzerThread_ProgressChanged;
-            AnalyzerThread.RunWorkerCompleted += AnalyzerThread_RunWorkerCompleted;
-            
+            _AnalyzerThread.DoWork += AnalyzerThread_DoWork;
+            _AnalyzerThread.ProgressChanged += AnalyzerThread_ProgressChanged;
+            _AnalyzerThread.RunWorkerCompleted += AnalyzerThread_RunWorkerCompleted;
+
             // Starts the scan
-            AnalyzerThread.RunWorkerAsync();
+            _AnalyzerThread.RunWorkerAsync();
         }
-        
+
         private void btn_Clear_Click(object sender, RoutedEventArgs e)
         {
             txt_AddDir.Text = string.Empty;
-            dirList.Clear();
+            _dirList.Clear();
             list_Folders.Items.Refresh();
 
             btn_Submit.IsEnabled = false;
@@ -74,9 +75,9 @@ namespace AnimeAssessor
                 if (Directory.Exists(txt_AddDir.Text.Trim()))
                 {
                     DirectoryInfo dir = new DirectoryInfo(txt_AddDir.Text.Trim());
-                    if (!dirList.Contains(dir))
+                    if (!_dirList.Contains(dir))
                     {
-                        dirList.Add(dir);
+                        _dirList.Add(dir);
                         txt_AddDir.Text = string.Empty;
                         list_Folders.Items.Refresh();
 
@@ -96,9 +97,9 @@ namespace AnimeAssessor
             if (Directory.Exists(txt_AddDir.Text.Trim()))
             {
                 DirectoryInfo dir = new DirectoryInfo(txt_AddDir.Text.Trim());
-                if (!dirList.Contains(dir))
+                if (!_dirList.Contains(dir))
                 {
-                    dirList.Add(dir);
+                    _dirList.Add(dir);
                     txt_AddDir.Text = string.Empty;
 
                     btn_Submit.IsEnabled = true;
@@ -113,9 +114,9 @@ namespace AnimeAssessor
                 if (!string.IsNullOrWhiteSpace(folderPath))
                 {
                     DirectoryInfo dir = new DirectoryInfo(folderPath);
-                    if (!dirList.Contains(dir))
+                    if (!_dirList.Contains(dir))
                     {
-                        dirList.Add(dir);
+                        _dirList.Add(dir);
                         // TextBox.Text was never changed so no need to reset it
 
                         btn_Submit.IsEnabled = true;
@@ -127,23 +128,23 @@ namespace AnimeAssessor
 
         private void InitObjects()
         {
-            dirList = new List<DirectoryInfo>();
-            list_Folders.ItemsSource = dirList;
-            notSortedFiles = new List<Children>();
-            sortedFiles = new List<Category>();
+            _dirList = new List<DirectoryInfo>();
+            list_Folders.ItemsSource = _dirList;
+            _notSortedFiles = new List<Children>();
+            _sortedFiles = new List<Category>();
         }
 
         #region BackgroundWorker Thread
         private void InitBackgroundWorker()
         {
-            AnalyzerThread = new BackgroundWorker();
-            AnalyzerThread.WorkerReportsProgress = true;
+            _AnalyzerThread = new BackgroundWorker();
+            _AnalyzerThread.WorkerReportsProgress = true;
         }
 
         // Main worker thread
         private void AnalyzerThread_DoWork(object sender, DoWorkEventArgs e)
         {
-            RunAnalysis(sender);
+            RunAnalysis((BackgroundWorker)sender);
         }
 
         // This event will be called after each file's analysis
@@ -151,7 +152,7 @@ namespace AnimeAssessor
         {
             pb_main.Value = e.ProgressPercentage;
             // Update label with current values
-            if(e.ProgressPercentage >= 99)
+            if (e.ProgressPercentage >= 99)
             {
                 lbl_scanProgress.Content = "Producing Results...";
             }
@@ -165,7 +166,7 @@ namespace AnimeAssessor
         private void AnalyzerThread_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             // Open the Result Window once the scan is complete
-            ScanResults resultWindow = new ScanResults(sortedFiles, notSortedFiles, titles);
+            ScanResults resultWindow = new ScanResults(_sortedFiles, _notSortedFiles, _titles);
             resultWindow.ShowDialog();
             lbl_scanProgress.Content = string.Empty;
         }
@@ -173,12 +174,12 @@ namespace AnimeAssessor
         private string OpenDialog()
         {
             // Don't reinitialize if the object already exists
-            // Won't be able to detect new devices
-            if (openDialog == null)
+            // Won't be able to detect newly added drives/devices
+            if (_openDialog == null)
             {
-                openDialog = new OpenDialogView();
+                _openDialog = new OpenDialogView();
             }
-            OpenDialogViewModel browseWindow = (OpenDialogViewModel)openDialog.DataContext;
+            OpenDialogViewModel browseWindow = (OpenDialogViewModel)_openDialog.DataContext;
 
             // Just disables file view, file view is limited though
             browseWindow.IsDirectoryChooser = true;
@@ -198,31 +199,28 @@ namespace AnimeAssessor
         }
 
         #region Analyzer 
-        private void RunAnalysis(object backgroundWorker)
+        private void RunAnalysis(BackgroundWorker backgroundWorker)
         {
-            titles = LoadXML(animeDBPath, "item", "name");
-
-            List<DirectoryInfo> dirs = new List<DirectoryInfo>();
+            _titles = LoadXML(_animeDBPath, "item", "name");
             List<FileInfo> allFiles = new List<FileInfo>();
 
-            // Find all directories
-            foreach (DirectoryInfo d in dirList)
+            try
             {
-                dirs.AddRange(d.GetDirectories("*", SearchOption.AllDirectories));
+                // Find all directories
+                allFiles = _dirList.SelectMany(d => d.GetDirectories("*", SearchOption.AllDirectories))
+                          .SelectMany(d => d.EnumerateFiles())
+                          .ToList();
+                // Add the files in the parent directory as well
+                allFiles.AddRange(_dirList.SelectMany(d => d.EnumerateFiles()).ToList());
             }
-            // Add the parent directory as well
-            dirs.AddRange(dirList);
-
-            // Find all the files
-            foreach (DirectoryInfo dir in dirs)
+            catch (UnauthorizedAccessException)
             {
-                allFiles.AddRange(dir.EnumerateFiles());
+                // Do nothing for now
             }
 
-            sortedFiles = SortFiles(allFiles, backgroundWorker);
+            _sortedFiles = SortFiles(allFiles, backgroundWorker);
         }
 
-        #endregion
 
         private List<Category> SortFiles(List<FileInfo> allFiles, object backgroundWorker)
         {
@@ -232,22 +230,24 @@ namespace AnimeAssessor
             foreach (FileInfo file in allFiles)
             {
                 fileCount++;
-                string[] subStrings = file.Name.Split(removables, StringSplitOptions.RemoveEmptyEntries);
+                string[] subStrings = file.Name.Split(_removables, StringSplitOptions.RemoveEmptyEntries);
                 // score holds a value for each title, highest score indicates closer match
-                int[] score = new int[titles.Count];
+                int[] score = new int[_titles.Count];
                 bool hasAScore = false;
 
                 // list's length - 1 to avoid extensions from being checked
-                for (int i = 0; i < titles.Count; i++)
+                for (int i = 0; i < _titles.Count; i++)
                 {
                     for (int j = 0; j < subStrings.Length - 1; j++)
                     {
                         // @\b defines the match to be specific to whole words
-                        if (Regex.IsMatch(titles[i], @"\b" + subStrings[j] + @"\b", RegexOptions.IgnoreCase))
+                        // @ avoid accidental keyword creation
+                        if (Regex.IsMatch(_titles[i], @"\b" + subStrings[j] + @"\b", RegexOptions.IgnoreCase))
                         {
-                            foreach (string s in file.Directory.Name.Split(removables, StringSplitOptions.RemoveEmptyEntries))
+                            // If a match is found, check the directory paths to enforce the match
+                            foreach (string s in file.Directory.Name.Split(_removables, StringSplitOptions.RemoveEmptyEntries))
                             {
-                                if (Regex.IsMatch(titles[i], @"\b" + s + @"\b", RegexOptions.IgnoreCase))
+                                if (Regex.IsMatch(_titles[i], @"\b" + s + @"\b", RegexOptions.IgnoreCase))
                                 {
                                     score[i]++;
                                 }
@@ -258,18 +258,19 @@ namespace AnimeAssessor
                             // Console.WriteLine("Found match with title '{0}' with string '{1}' from file '{2}'", titles[j], subStrings[i], file.Name);
                         }
                     }
-                    // if the percentage of word matches and total words in the title is > 80% 
+                    // if the percentage of word matches and total words in the title is > 80% (arbitrary)
+                    // To avoid false matches with longer titles
                     // boost the score
-                    int titleWordCount = titles[i].Split(removables, StringSplitOptions.RemoveEmptyEntries).Length;
+                    /*int titleWordCount = titles[i].Split(removables, StringSplitOptions.RemoveEmptyEntries).Length;
                     if ((100 * (score[i]) / (2 * titleWordCount)) > 80)
                     {
                         score[i] += 2;
-                    }
+                    } */
                 }
                 if (hasAScore)
                 {
                     // Find the highest score in the list and use it's title value as the title of the Category
-                    string titleName = titles[Array.IndexOf(score, score.Max())];
+                    string titleName = _titles[Array.IndexOf(score, score.Max())];
                     bool exists = false;
                     // Check through all the categories if it already exists, otherwise add a new one
                     // TODO perhaps check this in the class's constructor
@@ -290,7 +291,7 @@ namespace AnimeAssessor
                 else
                 {
                     // Files without a score were not matched with any existing category
-                    notSortedFiles.Add(new Children(file));
+                    _notSortedFiles.Add(new Children(file));
                 }
                 // Console.WriteLine("File: '{0}' has a max score of {1}", file.Name, score.Max());
 
@@ -298,52 +299,31 @@ namespace AnimeAssessor
                 // Send percentComplete to the backgroundWorker and the current file number
                 int progressPercentage = 100 * fileCount / allFiles.Count;
                 // Only the ReportProgress method can update the UI
-                (backgroundWorker as BackgroundWorker).ReportProgress(progressPercentage, fileCount);
+                ((BackgroundWorker)backgroundWorker).ReportProgress(progressPercentage, fileCount);
             }
             return categories;
         }
-        
+
         private List<string> LoadXML(string filePath, string descendant, string element)
         {
-            // Load the db
-            XDocument db = XDocument.Load(@filePath);
-            List<string> titles = new List<string>();
-
-            var query = from c in db.Root.Descendants(descendant)
-                            // Only do anime
-                        select c.Element("type").Value == "TV" ? c.Element(element).Value : "null";
-
-            foreach (string animeName in query)
-            {
-                titles.Add(animeName);
-            }
-            // Sanitize "null" additions
-            titles.RemoveAll(value => value == "null");
-            titles.Sort();
-
-            titles = DeAccentTitles(titles);
-
-            return titles;
+            return XDocument.Load(filePath)
+                    .Root
+                    .Descendants(descendant)
+                    .Where(c => c.Element("type").Value == "TV")
+                    .Select(c => c.Element(element).Value)
+                    .OrderBy(v => v)
+                    .Select(DeAccentTitles)
+                    .ToList();
         }
 
-        private List<string> DeAccentTitles(List<string> titlesToClean)
+        private string DeAccentTitles(string title)
         {
-            List<string> sanitizedTitles = new List<string>();
-            foreach (string s in titlesToClean)
-            {
-                string nfdNormalizedString = s.Normalize(NormalizationForm.FormD);
-                StringBuilder builder = new StringBuilder();
-
-                foreach (char c in nfdNormalizedString)
-                {
-                    if(CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    {
-                        builder.Append(c);
-                    }
-                }
-                sanitizedTitles.Add(builder.ToString().Normalize(NormalizationForm.FormC));
-            }
-            return sanitizedTitles;
+            char[] chars = title.Normalize(NormalizationForm.FormD)
+                 .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                 .ToArray();
+            return new string(chars).Normalize(NormalizationForm.FormC);
         }
+
+        #endregion
     }
 }

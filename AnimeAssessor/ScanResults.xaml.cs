@@ -19,20 +19,20 @@ namespace AnimeAssessor
     /// </summary>
     public partial class ScanResults : Window
     {
-        List<Category> SortedList;
-        List<Children> UnsortedList;
-        List<string> Categories;
+        List<Category> _SortedList;
+        List<Children> _UnsortedList;
+        List<string> _Categories;
         public ScanResults(List<Category> sortedList, List<Children> unsortedList, List<string> categories)
         {
             InitializeComponent();
 
-            SortedList = sortedList;
-            UnsortedList = unsortedList;
-            Categories = categories;
+            _SortedList = sortedList;
+            _UnsortedList = unsortedList;
+            _Categories = categories;
             
-            tree_sortedFiles.ItemsSource = SortedList;
-            list_unsortedList.ItemsSource = UnsortedList;
-            list_categoriesList.ItemsSource = Categories;
+            tree_sortedFiles.ItemsSource = _SortedList;
+            list_unsortedList.ItemsSource = _UnsortedList;
+            list_categoriesList.ItemsSource = _Categories;
         }
     }
 }
