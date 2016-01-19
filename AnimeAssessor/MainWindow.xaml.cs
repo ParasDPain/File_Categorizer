@@ -8,7 +8,6 @@ using System.Text.RegularExpressions;
 using System;
 using System.Linq;
 using System.Xml.Linq;
-using System.Threading;
 using System.ComponentModel;
 using System.Text;
 using System.Globalization;
@@ -22,7 +21,10 @@ namespace AnimeAssessor
     {
         // TODO Produce and suggest the top 5 matches?
         // TODO Folder selection is not user-friendly
-        // TODO Algorithm isn't functioning properly, test Manyuu Hiken-chou
+        // TODO Pre-compile all patterns beforehand
+        // TODO Match directory names for all cases and avoid repetitions for files from the same directory
+        // TODO Filter out common encoder keywords
+        // TODO Filter by file-format
         // Produce an output file or email it?
         // Add matrix for Quality/Size ratio
 
@@ -225,75 +227,50 @@ namespace AnimeAssessor
         private List<Category> SortFiles(List<FileInfo> allFiles, object backgroundWorker)
         {
             List<Category> categories = new List<Category>();
+            // Anonymous type creates a list of all titles split into substrings
+            var splitTitles = _titles.Select(t => new { titleName = t, Parts = SplitByRemovables(t) }).ToList();
             int fileCount = 0;
 
             foreach (FileInfo file in allFiles)
             {
                 fileCount++;
-                string[] subStrings = file.Name.Split(_removables, StringSplitOptions.RemoveEmptyEntries);
-                // score holds a value for each title, highest score indicates closer match
-                int[] score = new int[_titles.Count];
-                bool hasAScore = false;
+                string[] fileParts = SplitByRemovables(Path.GetFileNameWithoutExtension(file.Name));
+                string[] directoryParts = SplitByRemovables(file.Directory.Name);
 
-                // list's length - 1 to avoid extensions from being checked
-                for (int i = 0; i < _titles.Count; i++)
-                {
-                    for (int j = 0; j < subStrings.Length - 1; j++)
-                    {
-                        // @\b defines the match to be specific to whole words
-                        // @ avoid accidental keyword creation
-                        if (Regex.IsMatch(_titles[i], @"\b" + subStrings[j] + @"\b", RegexOptions.IgnoreCase))
-                        {
-                            // If a match is found, check the directory paths to enforce the match
-                            foreach (string s in file.Directory.Name.Split(_removables, StringSplitOptions.RemoveEmptyEntries))
-                            {
-                                if (Regex.IsMatch(_titles[i], @"\b" + s + @"\b", RegexOptions.IgnoreCase))
-                                {
-                                    score[i]++;
-                                }
-                            }
+                // Anonymous type finds the best match for each file
+                // Finds the score for each title, orders it by descending based on the score
+                // and gets assigned the first title in the ordered list from splitTitles
+                var topTitle = splitTitles.Select(t => new { titleObj = t, Score = ScoreTitles(t.Parts, fileParts, directoryParts) })
+                    .OrderByDescending(x => x.Score)
+                    .First();
 
-                            score[i]++;
-                            hasAScore = true;
-                            // Console.WriteLine("Found match with title '{0}' with string '{1}' from file '{2}'", titles[j], subStrings[i], file.Name);
-                        }
-                    }
-                    // if the percentage of word matches and total words in the title is > 80% (arbitrary)
-                    // To avoid false matches with longer titles
-                    // boost the score
-                    /*int titleWordCount = titles[i].Split(removables, StringSplitOptions.RemoveEmptyEntries).Length;
-                    if ((100 * (score[i]) / (2 * titleWordCount)) > 80)
-                    {
-                        score[i] += 2;
-                    } */
-                }
-                if (hasAScore)
+                Children child = new Children(file);
+
+                // A score of 0 would indicate no matches
+                if(topTitle.Score > 0)
                 {
-                    // Find the highest score in the list and use it's title value as the title of the Category
-                    string titleName = _titles[Array.IndexOf(score, score.Max())];
-                    bool exists = false;
-                    // Check through all the categories if it already exists, otherwise add a new one
-                    // TODO perhaps check this in the class's constructor
-                    foreach (Category c in categories)
+                    // Searches for a Category with the same name as the topTitle
+                    // returns null if none is found
+                    Category category = categories.FirstOrDefault(c => c.Name == topTitle.titleObj.titleName);
+
+                    // Child assignment as per the returned value from above
+                    if (category == null)
                     {
-                        if (c.Name == titleName)
-                        {
-                            c.AddChildren(new Children(file), titleName);
-                            exists = true;
-                            break;
-                        }
+                        // Create a new category and add to the list
+                        category = new Category(child, topTitle.titleObj.titleName);
+                        categories.Add(category);
                     }
-                    if (!exists)
+                    else
                     {
-                        categories.Add(new Category(new Children(file), titleName));
+                        // Add to the existing category
+                        category.AddChildren(child, topTitle.titleObj.titleName);
                     }
                 }
                 else
                 {
                     // Files without a score were not matched with any existing category
-                    _notSortedFiles.Add(new Children(file));
+                    _notSortedFiles.Add(child);
                 }
-                // Console.WriteLine("File: '{0}' has a max score of {1}", file.Name, score.Max());
 
                 // Update Progress
                 // Send percentComplete to the backgroundWorker and the current file number
@@ -302,6 +279,19 @@ namespace AnimeAssessor
                 ((BackgroundWorker)backgroundWorker).ReportProgress(progressPercentage, fileCount);
             }
             return categories;
+        }
+
+        private string[] SplitByRemovables(string value)
+        {
+            return value.Split(_removables, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private int ScoreTitles(string[] titleParts, string[] fileParts, string[] directoryParts)
+        {
+            int score = 0;
+            score = fileParts.Intersect(titleParts).Count();
+            score += directoryParts.Intersect(titleParts).Count();
+            return score;
         }
 
         private List<string> LoadXML(string filePath, string descendant, string element)
