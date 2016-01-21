@@ -203,7 +203,8 @@ namespace AnimeAssessor
         #region Analyzer 
         private void RunAnalysis(BackgroundWorker backgroundWorker)
         {
-            _titles = LoadXML(_animeDBPath, "item", "name");
+            var repository = new AnimeTvRepository();
+            _titles = repository.GetTvTitles(_animeDBPath);
             List<FileInfo> allFiles = new List<FileInfo>();
 
             try
@@ -292,26 +293,6 @@ namespace AnimeAssessor
             score = fileParts.Intersect(titleParts).Count();
             score += directoryParts.Intersect(titleParts).Count();
             return score;
-        }
-
-        private List<string> LoadXML(string filePath, string descendant, string element)
-        {
-            return XDocument.Load(filePath)
-                    .Root
-                    .Descendants(descendant)
-                    .Where(c => c.Element("type").Value == "TV")
-                    .Select(c => c.Element(element).Value)
-                    .OrderBy(v => v)
-                    .Select(DeAccentTitles)
-                    .ToList();
-        }
-
-        private string DeAccentTitles(string title)
-        {
-            char[] chars = title.Normalize(NormalizationForm.FormD)
-                 .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                 .ToArray();
-            return new string(chars).Normalize(NormalizationForm.FormC);
         }
 
         #endregion

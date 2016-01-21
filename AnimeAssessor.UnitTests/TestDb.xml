@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<report>
+  <args>
+    <type>anime</type>
+    <name></name>
+    <search></search>
+  </args>
+  <item>
+    <id>17938</id>
+    <gid>721551383</gid>
+    <type>ONA</type>
+    <name>Koyomimonogatari</name>
+    <precision>ONA</precision>
+    <vintage>2016-01-09</vintage>
+  </item>
+  <item>
+    <id>17937</id>
+    <gid>1319318627</gid>
+    <type>TV</type>
+    <name>Qualidea Code</name>
+    <precision>TV</precision>
+  </item>
+  <item>
+    <id>17936</id>
+    <gid>542632259</gid>
+    <type>OAV</type>
+    <name>To Love-Ru -Trouble- Darkness</name>
+    <precision>OAV 3</precision>
+    <vintage>2016-07-04</vintage>
+  </item>
+  <item>
+    <id>17925</id>
+    <gid>1248384627</gid>
+    <type>OAV</type>
+    <name>Fairy in the Forest</name>
+    <precision>OAV</precision>
+    <vintage>2001-06-15</vintage>
+  </item>
+  <item>
+    <id>17924</id>
+    <gid>798219104</gid>
+    <type>OAV</type>
+    <name>My Private Tutor</name>
+    <precision>OAV</precision>
+    <vintage>2002-05-17</vintage>
+  </item>
+  <item>
+    <id>17921</id>
+    <gid>2494305591</gid>
+    <type>TV</type>
+    <name>Ohenro</name>
+    <precision>TV</precision>
+    <vintage>2014-05-03 to 2015-03-28</vintage>
+  </item>
+  <item>
+    <id>17920</id>
+    <gid>509269950</gid>
+    <type>TV</type>
+    <name>Ketsuekigata-kun!</name>
+    <precision>TV 4</precision>
+    <vintage>2016-01-11</vintage>
+  </item>
+  <item>
+    <id>17911</id>
+    <gid>2399511937</gid>
+    <type>TV</type>
+    <name>Tabi Machi Late Show</name>
+    <precision>TV</precision>
+    <vintage>2016-01-08</vintage>
+  </item>
+  <item>
+    <id>17910</id>
+    <gid>1711432611</gid>
+    <type>TV</type>
+    <name>Kono Danshi, Mahō ga Oshigoto Desu.</name>
+    <precision>TV</precision>
+    <vintage>2016-02-05</vintage>
+  </item>
+</report>
